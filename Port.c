@@ -1,3 +1,4 @@
+Port.c
  /******************************************************************************
  *
  * Module: Port
@@ -28,10 +29,6 @@
 STATIC const Port_ConfigPins * Port_Pins = NULL_PTR;
 /*Status variable to check if the module is initialized or not*/
 STATIC uint8 Port_Status = PORT_NOT_INITIALIZED;
-/*Status variable to check if the direction is changeable*/
-STATIC uint8 Port_Direction_Change = DIRECTION_NOT_CHANGEABLE;
-/*Status variable to check if the mode is changeable*/
-STATIC uint8 Port_Mode_Change = MODE_NOT_CHANGEABLE;
 
 /************************************************************************************
 * Service Name: Port_Init
@@ -70,12 +67,11 @@ void Port_Init(const Port_ConfigType* ConfigPtr )
 	else
   #endif
         {
-    for (uint8 ID=ZERO ; ID< PORT_CONFIGURED_PINS ; ID ++ )
-    {
     Port_Pins=ConfigPtr->Pins;      
     volatile uint32 * Port_Ptr = NULL_PTR; /* point to the required Port Registers base address */
     volatile uint32 delay = ZERO; /*a variable to create the delay required for the clock to start*/
- 
+    for (uint8 ID=ZERO ; ID< PORT_CONFIGURED_PINS ; ID ++ )
+    {
     /*Setting Port_Ptr to hold configuration structure address*/
     switch(Port_Pins[ID].Port_Number)
     {
@@ -157,10 +153,10 @@ void Port_Init(const Port_ConfigType* ConfigPtr )
     /* Setting mode for the pin*/
       /* For the GPIO */
       if(GPIO == Port_Pins[ID].Pin_Mode)
-      {
+      {  
       CLEAR_BIT(*(volatile uint32 *)((volatile uint8 *)Port_Ptr + PORT_ANALOG_MODE_SEL_REG_OFFSET) , Port_Pins[ID].Pin_Number);      /* Clear the corresponding bit in the GPIOAMSEL register to disable analog functionality on this pin */
       CLEAR_BIT(*(volatile uint32 *)((volatile uint8 *)Port_Ptr + PORT_ALT_FUNC_REG_OFFSET) , Port_Pins[ID].Pin_Number);             /* Disable Alternative function for this pin by clear the corresponding bit in GPIOAFSEL register */
-      *(volatile uint32 *)((volatile uint8 *)Port_Ptr + PORT_CTL_REG_OFFSET) &= ~(FIRST_BYTE_MASK << (Port_Pins[ID].Pin_Number * FOUR));     /* Clear the PMCx bits for this pin */
+      *(volatile uint32 *)((volatile uint8 *)Port_Ptr + PORT_CTL_REG_OFFSET) &= ~(FIRST_BYTE_MASK << (Port_Pins[ID].Pin_Number * FOUR));     /* Clear the PMCx bits for this pin */      
       SET_BIT(*(volatile uint32 *)((volatile uint8 *)Port_Ptr + PORT_DIGITAL_ENABLE_REG_OFFSET) , Port_Pins[ID].Pin_Number);        /* Set the corresponding bit in the GPIODEN register to enable digital functionality on this pin */
       }
       /* For the ADC */
@@ -179,27 +175,10 @@ void Port_Init(const Port_ConfigType* ConfigPtr )
      *(volatile uint32 *)((volatile uint8 *)Port_Ptr + PORT_CTL_REG_OFFSET) |= ((uint32)Port_Pins[ID].Pin_Mode << (Port_Pins[ID].Pin_Number * FOUR));     /* Clear the PMCx bits for this pin */
      SET_BIT(*(volatile uint32 *)((volatile uint8 *)Port_Ptr + PORT_DIGITAL_ENABLE_REG_OFFSET) , Port_Pins[ID].Pin_Number);        /* Set the corresponding bit in the GPIODEN register to enable digital functionality on this pin */
     }
-    /*Check if direction is changeable*/
-    if(STD_ON == Port_Pins[ID].Pin_Direction_Changeable)
-    {
-    Port_Direction_Change= DIRECTION_CHANGEABLE;
-    }
-    else
-    {
-    /*Do nothing*/
-    }
-    /*Check if mode is changeable*/
-    if(STD_ON == Port_Pins[ID].Pin_Mode_Changeable)
-    {
-    Port_Direction_Change= MODE_CHANGEABLE;
-    }
-    else
-    {
-    /*Do nothing*/
-    }
     Port_Status=PORT_INITIALIZED; /*Port initialized*/
-    }      
+    } 
     }
+    
 }
 
 #if (STD_ON == PORT_SET_PIN_DIRECTION_API)
@@ -238,7 +217,7 @@ void Port_SetPinDirection ( Port_PinType Pin , Port_PinDirectionType Direction )
         /*Do nothing*/        
         }
         /*checks if the direction is changeable*/
-        if (DIRECTION_NOT_CHANGEABLE == Port_Direction_Change)
+        if (DIRECTION_NOT_CHANGEABLE == Port_Configuration.Pins[Pin].Pin_Direction_Changeable)
         {
                 Det_ReportError(PORT_MODULE_ID, PORT_INSTANCE_ID, PORT_SET_PIN_DIRECTION_SID,
 		     PORT_E_DIRECTION_UNCHANGEABLE);
@@ -272,33 +251,10 @@ void Port_SetPinDirection ( Port_PinType Pin , Port_PinDirectionType Direction )
     if(PORT_PIN_OUT == Direction)
     {
 	SET_BIT(*(volatile uint32 *)((volatile uint8 *)Port_Ptr + PORT_DIR_REG_OFFSET) , Port_Configuration.Pins[Pin].Pin_Number);                /* Set the corresponding bit in the GPIODIR register to configure it as output pin */
-        
-        if(STD_HIGH == Port_Configuration.Pins[Pin].Pin_Initial_Value)
-        {
-            SET_BIT(*(volatile uint32 *)((volatile uint8 *)Port_Ptr + PORT_DATA_REG_OFFSET) , Port_Configuration.Pins[Pin].Pin_Number);          /* Set the corresponding bit in the GPIODATA register to provide initial value 1 */
-        }
-        else
-        {
-            CLEAR_BIT(*(volatile uint32 *)((volatile uint8 *)Port_Ptr + PORT_DATA_REG_OFFSET) , Port_Configuration.Pins[Pin].Pin_Number);        /* Clear the corresponding bit in the GPIODATA register to provide initial value 0 */
-        }
     }
     else if(PORT_PIN_IN == Direction)
     {
         CLEAR_BIT(*(volatile uint32 *)((volatile uint8 *)Port_Ptr + PORT_DIR_REG_OFFSET) , Port_Configuration.Pins[Pin].Pin_Number);             /* Clear the corresponding bit in the GPIODIR register to configure it as input pin */
-        
-        if(PULL_UP == Port_Configuration.Pins[Pin].Pin_Resistor)
-        {
-            SET_BIT(*(volatile uint32 *)((volatile uint8 *)Port_Ptr + PORT_PULL_UP_REG_OFFSET) , Port_Configuration.Pins[Pin].Pin_Number);       /* Set the corresponding bit in the GPIOPUR register to enable the internal pull up pin */
-        }
-        else if(PULL_DOWN == Port_Configuration.Pins[Pin].Pin_Resistor)
-        {
-            SET_BIT(*(volatile uint32 *)((volatile uint8 *)Port_Ptr + PORT_PULL_DOWN_REG_OFFSET) , Port_Configuration.Pins[Pin].Pin_Number);     /* Set the corresponding bit in the GPIOPDR register to enable the internal pull down pin */
-        }
-        else
-        {
-            CLEAR_BIT(*(volatile uint32 *)((volatile uint8 *)Port_Ptr + PORT_PULL_UP_REG_OFFSET) , Port_Configuration.Pins[Pin].Pin_Number);     /* Clear the corresponding bit in the GPIOPUR register to disable the internal pull up pin */
-            CLEAR_BIT(*(volatile uint32 *)((volatile uint8 *)Port_Ptr + PORT_PULL_DOWN_REG_OFFSET) , Port_Configuration.Pins[Pin].Pin_Number);   /* Clear the corresponding bit in the GPIOPDR register to disable the internal pull down pin */
-        }
     }
         }
 }
@@ -351,40 +307,23 @@ void Port_RefreshPortDirection( void )
         default:
                  break;
     }
-        
+    /*Check if the pin direction is changeable then exclude it */
+    if (DIRECTION_CHANGEABLE == Port_Configuration.Pins[ID].Pin_Direction_Changeable)
+    {
+    /*Do Nothing*/
+    }    
+    else 
+    {
     if(PORT_PIN_OUT == Port_Configuration.Pins[ID].Pin_Direction)
     {
 	SET_BIT(*(volatile uint32 *)((volatile uint8 *)Port_Ptr + PORT_DIR_REG_OFFSET) , Port_Configuration.Pins[ID].Pin_Number);                /* Set the corresponding bit in the GPIODIR register to configure it as output pin */
-        
-        if(STD_HIGH == Port_Configuration.Pins[ID].Pin_Initial_Value)
-        {
-            SET_BIT(*(volatile uint32 *)((volatile uint8 *)Port_Ptr + PORT_DATA_REG_OFFSET) , Port_Configuration.Pins[ID].Pin_Number);          /* Set the corresponding bit in the GPIODATA register to provide initial value 1 */
-        }
-        else
-        {
-            CLEAR_BIT(*(volatile uint32 *)((volatile uint8 *)Port_Ptr + PORT_DATA_REG_OFFSET) , Port_Configuration.Pins[ID].Pin_Number);        /* Clear the corresponding bit in the GPIODATA register to provide initial value 0 */
-        }
     }
     else if(PORT_PIN_IN == Port_Configuration.Pins[ID].Pin_Direction)
     {
         CLEAR_BIT(*(volatile uint32 *)((volatile uint8 *)Port_Ptr + PORT_DIR_REG_OFFSET) , Port_Configuration.Pins[ID].Pin_Number);             /* Clear the corresponding bit in the GPIODIR register to configure it as input pin */
-        
-        if(PULL_UP == Port_Configuration.Pins[ID].Pin_Resistor)
-        {
-            SET_BIT(*(volatile uint32 *)((volatile uint8 *)Port_Ptr + PORT_PULL_UP_REG_OFFSET) , Port_Configuration.Pins[ID].Pin_Number);       /* Set the corresponding bit in the GPIOPUR register to enable the internal pull up pin */
-        }
-        else if(PULL_DOWN == Port_Configuration.Pins[ID].Pin_Resistor)
-        {
-            SET_BIT(*(volatile uint32 *)((volatile uint8 *)Port_Ptr + PORT_PULL_DOWN_REG_OFFSET) , Port_Configuration.Pins[ID].Pin_Number);     /* Set the corresponding bit in the GPIOPDR register to enable the internal pull down pin */
-        }
-        else
-        {
-            CLEAR_BIT(*(volatile uint32 *)((volatile uint8 *)Port_Ptr + PORT_PULL_UP_REG_OFFSET) , Port_Configuration.Pins[ID].Pin_Number);     /* Clear the corresponding bit in the GPIOPUR register to disable the internal pull up pin */
-            CLEAR_BIT(*(volatile uint32 *)((volatile uint8 *)Port_Ptr + PORT_PULL_DOWN_REG_OFFSET) , Port_Configuration.Pins[ID].Pin_Number);   /* Clear the corresponding bit in the GPIOPDR register to disable the internal pull down pin */
-        }
     }
     }
-    
+    }
         }
 }
 
@@ -485,7 +424,7 @@ void Port_SetPinMode(  Port_PinType Pin,  Port_PinModeType Mode )
         /* Do nothing*/        
         }
         /* checks if the mode is changeable*/
-        if (MODE_NOT_CHANGEABLE == Port_Mode_Change)
+        if (MODE_NOT_CHANGEABLE == Port_Configuration.Pins[Pin].Pin_Mode_Changeable)
         {
                 Det_ReportError(PORT_MODULE_ID, PORT_INSTANCE_ID, PORT_SET_PIN_MODE_SID,
 		     PORT_E_MODE_UNCHANGEABLE);
@@ -543,6 +482,5 @@ void Port_SetPinMode(  Port_PinType Pin,  Port_PinModeType Mode )
         }
 }
 #endif
-
 
 
