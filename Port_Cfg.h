@@ -1,3 +1,4 @@
+Port_Cfg.h
  /******************************************************************************
  *
  * Module: Port
@@ -166,7 +167,7 @@
    
 /* 
  * PORT Configured Pin Directions 
- * by default all pins are configured as GPIO Input, except for LED connected at PF1
+ * by default all pins are configured as GPIO Input, except for LEDs connected at PF1,PF2,PF3
  */
 #define PortConf_PA0_PIN_DIRECTION         (Port_PinDirectionType)PORT_PIN_IN
 #define PortConf_PA1_PIN_DIRECTION         (Port_PinDirectionType)PORT_PIN_IN
@@ -204,8 +205,8 @@
 #define PortConf_PE5_PIN_DIRECTION         (Port_PinDirectionType)PORT_PIN_IN
 #define PortConf_PF0_PIN_DIRECTION         (Port_PinDirectionType)PORT_PIN_IN
 #define PortConf_PF1_PIN_DIRECTION         (Port_PinDirectionType)PORT_PIN_OUT
-#define PortConf_PF2_PIN_DIRECTION         (Port_PinDirectionType)PORT_PIN_IN
-#define PortConf_PF3_PIN_DIRECTION         (Port_PinDirectionType)PORT_PIN_IN
+#define PortConf_PF2_PIN_DIRECTION         (Port_PinDirectionType)PORT_PIN_OUT
+#define PortConf_PF3_PIN_DIRECTION         (Port_PinDirectionType)PORT_PIN_OUT
 #define PortConf_PF4_PIN_DIRECTION         (Port_PinDirectionType)PORT_PIN_IN
 
 /* 
@@ -255,7 +256,7 @@
 /* 
  * PORT Configured Pin Internal Resistor 
  * by default all pins are configured as inputs in pull-up configuration,
- * except for LED at PF1 is output  
+ * except for LEDs at PF1,PF2,PF3 is output  
  */
 #define PortConf_PA0_PIN_INTERNAL_RESISTOR         (Port_InternalResistorType)PULL_UP
 #define PortConf_PA1_PIN_INTERNAL_RESISTOR         (Port_InternalResistorType)PULL_UP
@@ -293,8 +294,8 @@
 #define PortConf_PE5_PIN_INTERNAL_RESISTOR         (Port_InternalResistorType)PULL_UP
 #define PortConf_PF0_PIN_INTERNAL_RESISTOR         (Port_InternalResistorType)PULL_UP
 #define PortConf_PF1_PIN_INTERNAL_RESISTOR         (Port_InternalResistorType)OFF
-#define PortConf_PF2_PIN_INTERNAL_RESISTOR         (Port_InternalResistorType)PULL_UP
-#define PortConf_PF3_PIN_INTERNAL_RESISTOR         (Port_InternalResistorType)PULL_UP
+#define PortConf_PF2_PIN_INTERNAL_RESISTOR         (Port_InternalResistorType)OFF
+#define PortConf_PF3_PIN_INTERNAL_RESISTOR         (Port_InternalResistorType)OFF
 #define PortConf_PF4_PIN_INTERNAL_RESISTOR         (Port_InternalResistorType)PULL_UP
 
 /* 
